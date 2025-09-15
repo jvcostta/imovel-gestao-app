@@ -1,72 +1,38 @@
 services:
-  # Banco de dados MySQL
-  mysql:
-    image: mysql:8.0
-    container_name: imovel_mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: admin123
-      MYSQL_DATABASE: imovel_gestao
-      MYSQL_USER: app_user
-      MYSQL_PASSWORD: app_password
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./scripts:/docker-entrypoint-initdb.d
-    networks:
-      - imovel_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
-
-  # Backend FastAPI
-  backend:
-    build: ./backend
-    container_name: imovel_backend
-    restart: always
-    ports:
-      - "8000:8000"
-    environment:
-      MYSQL_USER: app_user
-      MYSQL_PASSWORD: app_password
-      MYSQL_HOST: mysql
-      MYSQL_DATABASE: imovel_gestao
-    depends_on:
-      mysql:
-        condition: service_healthy
-    networks:
-      - imovel_network
-    volumes:
-      - ./backend:/app
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # Frontend Next.js
+  # Frontend Next.js (Produção)
   frontend:
-    build: ./frontend
+    build: .
     container_name: imovel_frontend
-    restart: always
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-    depends_on:
-      - backend
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NODE_ENV: production
     networks:
-      - imovel_network
+      - frontend_network
+
+  # Frontend (Desenvolvimento)
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: imovel_frontend_dev
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NODE_ENV: development
     volumes:
-      - ./frontend:/app
+      - .:/app
       - /app/node_modules
       - /app/.next
-
-volumes:
-  mysql_data:
+    networks:
+      - frontend_network
+    profiles:
+      - dev
 
 networks:
-  imovel_network:
+  frontend_network:
     driver: bridge

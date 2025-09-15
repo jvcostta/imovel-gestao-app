@@ -1,150 +1,255 @@
-# Imóvel Gestão App
+# Imóvel Gestão - Frontend
 
-Sistema de gestão de imóveis com backend em FastAPI (Python) e frontend em Next.js.
+Frontend da aplicação de gestão de imóveis desenvolvido em Next.js com TypeScript.
 
-## Estrutura do Projeto
+## 🏗️ Arquitetura
 
-```
-├── backend/          # API FastAPI em Python
-├── frontend/         # Aplicação Next.js
-├── scripts/          # Scripts SQL para inicialização do banco
-└── docker-compose.yml # Orquestração dos containers
-```
+Este repositório contém apenas o **frontend** da aplicação. O backend está em um repositório separado:
 
-## Tecnologias Utilizadas
+- **Frontend (este repo)**: Interface do usuário em Next.js
+- **Backend**: API FastAPI em Python (repositório separado)
 
-### Backend
-- **FastAPI** - Framework web moderno e rápido para Python
-- **SQLAlchemy** - ORM para Python
-- **MySQL** - Banco de dados relacional
-- **Pydantic** - Validação de dados
-- **Docker** - Containerização
+## 🚀 Tecnologias
 
-### Frontend
-- **Next.js** - Framework React
+- **Next.js 14** - Framework React
 - **TypeScript** - Tipagem estática
 - **Tailwind CSS** - Framework CSS
 - **Radix UI** - Componentes acessíveis
+- **Docker** - Containerização
 
-## Como Executar
+## 📁 Estrutura do Projeto
+
+```
+├── app/                    # App Router do Next.js
+│   ├── page.tsx           # Página inicial
+│   ├── layout.tsx         # Layout raiz
+│   ├── globals.css        # Estilos globais
+│   ├── financeiro/        # Módulo financeiro
+│   ├── imoveis/           # Módulo de imóveis
+│   ├── inquilinos/        # Módulo de inquilinos
+│   ├── manutencao/        # Módulo de manutenção
+│   ├── notificacoes/      # Módulo de notificações
+│   ├── pagamentos/        # Módulo de pagamentos
+│   └── relatorios/        # Módulo de relatórios
+├── components/            # Componentes reutilizáveis
+│   ├── ui/               # Componentes UI base
+│   ├── navigation.tsx    # Navegação
+│   └── theme-provider.tsx # Provider de tema
+├── lib/                  # Utilitários e configurações
+│   ├── api-client.ts     # Cliente para comunicação com API
+│   ├── types.ts          # Tipos TypeScript
+│   └── utils.ts          # Funções utilitárias
+├── public/               # Arquivos estáticos
+├── styles/               # Estilos adicionais
+├── Dockerfile            # Container de produção
+├── Dockerfile.dev        # Container de desenvolvimento
+└── docker-compose.yml    # Orquestração Docker
+```
+
+## ⚙️ Configuração
 
 ### Pré-requisitos
-- Docker
-- Docker Compose
 
-### Executando com Docker
+- Node.js 18+
+- pnpm
+- Docker (opcional)
+
+### Variáveis de Ambiente
+
+Copie o arquivo `.env.example` para `.env.local` e configure:
+
+```env
+# URL da API do backend
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Environment
+NODE_ENV=development
+```
+
+### Instalação Local
+
+```bash
+# Instalar dependências
+pnpm install
+
+# Executar em modo desenvolvimento
+pnpm dev
+
+# Build para produção
+pnpm build
+
+# Executar produção
+pnpm start
+```
+
+## 🐳 Docker
+
+### Desenvolvimento
+
+```bash
+# Executar container de desenvolvimento
+docker-compose --profile dev up frontend-dev
+
+# Ou usar make
+make dev
+```
+
+### Produção
+
+```bash
+# Build e executar container de produção
+docker-compose up frontend --build
+
+# Em background
+docker-compose up -d frontend --build
+```
+
+## 🔗 Comunicação com Backend
+
+O frontend se comunica com o backend através do cliente API localizado em `lib/api-client.ts`.
+
+### Configuração da API
+
+```typescript
+// lib/api-client.ts
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+// Uso nos componentes
+import { apiClient } from '@/lib/api-client';
+
+const properties = await apiClient.getProperties();
+```
+
+### Endpoints Disponíveis
+
+- **Imóveis**: `/api/properties`
+- **Inquilinos**: `/api/tenants`
+- **Contratos**: `/api/contracts`
+- **Pagamentos**: `/api/payments`
+- **Manutenções**: `/api/maintenances`
+
+## 🏃‍♂️ Desenvolvimento
+
+### Scripts Disponíveis
+
+```bash
+# Desenvolvimento
+pnpm dev              # Servidor de desenvolvimento
+
+# Build
+pnpm build            # Build de produção
+pnpm start            # Executar build
+
+# Qualidade
+pnpm lint             # Executar ESLint
+pnpm type-check       # Verificar tipos TypeScript
+
+# Docker
+pnpm docker:dev       # Container de desenvolvimento
+pnpm docker:prod      # Container de produção
+```
+
+### Estrutura de Componentes
+
+```typescript
+// Exemplo de componente que usa a API
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api-client';
+import { Property } from '@/lib/types';
+
+export function PropertiesList() {
+  const [properties, setProperties] = useState<Property[]>([]);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const data = await apiClient.getProperties();
+        setProperties(data);
+      } catch (error) {
+        console.error('Erro ao carregar imóveis:', error);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
+  return (
+    <div>
+      {properties.map(property => (
+        <div key={property.id}>
+          {property.address}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## 🌐 Deploy
+
+### Vercel (Recomendado)
+
+1. Conecte o repositório ao Vercel
+2. Configure as variáveis de ambiente:
+   - `NEXT_PUBLIC_API_URL`: URL da API de produção
+
+### Docker
+
+```bash
+# Build da imagem
+docker build -t imovel-frontend .
+
+# Executar container
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_API_URL=https://api.seudominio.com \
+  imovel-frontend
+```
+
+## 🔧 Configuração de Backend
+
+Para que o frontend funcione corretamente, certifique-se de que:
+
+1. O backend esteja rodando na URL configurada em `NEXT_PUBLIC_API_URL`
+2. O backend tenha CORS configurado para aceitar requisições do frontend
+3. Todos os endpoints esperados estejam implementados
+
+### Exemplo de configuração CORS no backend (FastAPI):
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "https://seudominio.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+## 📝 Contribuição
 
 1. Clone o repositório
-2. Execute o comando:
+2. Crie uma branch: `git checkout -b feature/nova-funcionalidade`
+3. Faça suas alterações
+4. Execute os testes: `pnpm lint`
+5. Commit: `git commit -m 'feat: nova funcionalidade'`
+6. Push: `git push origin feature/nova-funcionalidade`
+7. Abra um Pull Request
 
-```bash
-docker-compose up --build
-```
+## 🐛 Troubleshooting
 
-### Serviços Disponíveis
+### Problemas Comuns
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **Documentação da API**: http://localhost:8000/docs
-- **MySQL**: localhost:3306
+**Erro de conexão com a API:**
+- Verifique se `NEXT_PUBLIC_API_URL` está correto
+- Confirme se o backend está rodando
+- Verifique as configurações de CORS no backend
 
-### Dados de Acesso MySQL
+**Erro de build:**
+- Execute `pnpm clean` e tente novamente
+- Verifique se todas as dependências estão instaladas
 
-- **Host**: localhost
-- **Port**: 3306
-- **Database**: imovel_gestao
-- **User**: app_user
-- **Password**: app_password
-- **Root Password**: admin123
-
-## Estrutura da API
-
-### Endpoints Principais
-
-#### Imóveis
-- `GET /api/properties` - Listar imóveis
-- `POST /api/properties` - Criar imóvel
-- `GET /api/properties/{id}` - Obter imóvel
-- `PUT /api/properties/{id}` - Atualizar imóvel
-- `DELETE /api/properties/{id}` - Deletar imóvel
-
-#### Inquilinos
-- `GET /api/tenants` - Listar inquilinos
-- `POST /api/tenants` - Criar inquilino
-- `GET /api/tenants/{id}` - Obter inquilino
-- `PUT /api/tenants/{id}` - Atualizar inquilino
-- `DELETE /api/tenants/{id}` - Deletar inquilino
-
-#### Contratos
-- `GET /api/contracts` - Listar contratos
-- `POST /api/contracts` - Criar contrato
-- `GET /api/contracts/{id}` - Obter contrato
-
-#### Pagamentos
-- `GET /api/payments` - Listar pagamentos
-- `POST /api/payments` - Criar pagamento
-- `PUT /api/payments/{id}` - Atualizar pagamento
-
-#### Manutenções
-- `GET /api/maintenances` - Listar manutenções
-- `POST /api/maintenances` - Criar manutenção
-- `PUT /api/maintenances/{id}` - Atualizar manutenção
-
-## Desenvolvimento
-
-### Backend (FastAPI)
-
-Para desenvolvimento local do backend:
-
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
-
-### Frontend (Next.js)
-
-Para desenvolvimento local do frontend:
-
-```bash
-cd frontend
-pnpm install
-pnpm dev
-```
-
-## Banco de Dados
-
-O banco de dados é automaticamente inicializado com as tabelas necessárias através dos scripts SQL na pasta `scripts/`.
-
-### Principais Tabelas
-- `properties` - Imóveis
-- `tenants` - Inquilinos
-- `contracts` - Contratos
-- `payments` - Pagamentos
-- `maintenances` - Manutenções
-
-## Logs e Monitoramento
-
-Para visualizar os logs dos containers:
-
-```bash
-# Todos os serviços
-docker-compose logs -f
-
-# Serviço específico
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f mysql
-```
-
-## Parar os Serviços
-
-```bash
-docker-compose down
-```
-
-Para remover também os volumes (dados do banco):
-
-```bash
-docker-compose down -v
-```
+**Problemas com Docker:**
+- Certifique-se de que o Docker está rodando
+- Verifique se as portas não estão em uso
